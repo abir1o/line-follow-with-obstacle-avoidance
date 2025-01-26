@@ -1,0 +1,179 @@
+#include <Servo.h>
+
+#define right_ena 10
+#define in1 7
+#define in2 6
+//left side
+#define left_enb 9
+#define in3 5
+#define in4 4
+
+//ir sensor
+#define right_ir A0
+#define left_ir A1
+//ultra sound
+#define echo A2
+#define trig A3
+//servo
+#define servo 3 //any pwm pin
+Servo myservo;
+
+//important global variable
+float front_distance;
+float right_distance;
+float left_distance;
+
+void setup(){
+  //inputs
+  pinMode(right_ir, INPUT);
+  pinMode(left_ir, INPUT);
+  myservo.attach(3);
+  pinMode(echo, INPUT);
+
+  //outputs
+  pinMode(right_ena, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+
+  pinMode(left_enb, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(trig, OUTPUT);
+
+//speed
+  analogWrite(right_ena, 100);
+  analogWrite(left_enb, 100);
+
+  myservo.write(100);
+}
+void check()
+{
+  stop();
+  delay(100);
+  int i;
+  for(i=100; i>=20; i--)
+  {
+    delay(10);
+    myservo.write(i);
+  }
+  delay(500);
+  right_distance = distance();
+  delay(100);
+  for(i=20; i<=180; i++)
+  {
+    delay(10);
+    myservo.write(i);
+  }
+  delay(500);
+  left_distance = distance();
+  delay(100);
+
+for(i=180; i>=100; i--){
+  delay(10);
+  myservo.write(i);
+}
+delay(500);
+avoid_object();
+}
+
+void avoid_object()
+{
+  if(right_distance > left_distance)
+  {
+    turn_right();
+    delay(500);
+    forword();
+    delay(600);
+    turn_left();
+    delay(500);
+    forword();
+    delay(600);
+    turn_left();
+    delay(500);
+  }
+  else
+  {
+    turn_left();
+    delay(500);
+    forword();
+    delay(600);
+    turn_right();
+    delay(500);
+    forword();
+    delay(600);
+    turn_right();
+    delay(500);
+  }
+}
+float distance()
+{
+  float dis;
+  float time;
+  digitalWrite(trig, LOW);
+  delay(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  time = pulseIn(echo, HIGH);
+  dis = (time*0.0375)/2; 
+  return dis;
+}
+void forword()
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);  
+}
+void backword()
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+void turn_right()
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+}
+void turn_left()
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+void stop()
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
+void loop()
+{
+  front_distance = distance();
+  if(digitalRead(right_ir)==LOW && digitalRead(left_ir)==LOW)
+  {
+    if(front_distance > 20.0)
+    {
+      forword();
+    }
+    else
+    {
+      check();
+    }
+  }
+  else if(digitalRead(right_ir)==HIGH && digitalRead(left_ir)==LOW)
+  {
+    turn_right();
+  }
+  else if(digitalRead(right_ir)==LOW && digitalRead(left_ir)==HIGH)
+  {
+    turn_left();
+  }
+} 
